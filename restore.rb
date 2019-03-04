@@ -15,8 +15,12 @@ end
 output_dir = ENV["OUTPUT_DIR"]
 
 if output_dir.nil?
-    `mkdir -p out`
-    output_dir = "out"
+    if Dir.exist?("out")
+        output_dir = "out"
+    else
+        puts "OUTPUT_DIR not specified and `out` does not exist"
+        exit 1
+    end
 end
 
 unless FileTest.exist?("#{output_dir}/teams.json")
