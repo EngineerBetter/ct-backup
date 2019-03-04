@@ -12,8 +12,6 @@ if output_dir.nil?
     output_dir = "out"
 end
 
-# encryption_key = SecureRandom.hex(32)
-
 credhub_contents = `credhub export`
 
 # create the cipher for encrypting
