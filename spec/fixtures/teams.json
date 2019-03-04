@@ -1,0 +1,43 @@
+[
+    {
+        "id": 1,
+        "name": "main",
+        "auth": {
+            "groups": [],
+            "users": [
+                "local:admin"
+            ]
+        }
+    },
+    {
+        "id": 2,
+        "name": "test",
+        "auth": {
+            "groups": [],
+            "users": [
+                "github:engineerbetterci",
+                "local:admin"
+            ]
+        }
+    },
+    {
+        "id": 3,
+        "name": "test2",
+        "auth": {
+            "groups": [
+                "github:ebciaccess"
+            ],
+            "users": []
+        }
+    },
+    {
+        "id": 4,
+        "name": "test3",
+        "auth": {
+            "groups": [],
+            "users": [
+                "github:engineerbetterci"
+            ]
+        }
+    }
+]

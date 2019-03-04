@@ -1,0 +1,23 @@
+[
+    {
+        "id": 30,
+        "name": "weave-scope",
+        "paused": true,
+        "public": false,
+        "team_name": "main"
+    },
+    {
+        "id": 34,
+        "name": "credhub-backup",
+        "paused": false,
+        "public": false,
+        "team_name": "main"
+    },
+    {
+        "id": 37,
+        "name": "influxdb-boshrelease",
+        "paused": false,
+        "public": false,
+        "team_name": "main"
+    }
+]

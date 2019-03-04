@@ -1,0 +1,9 @@
+[
+    {
+        "id": 42,
+        "name": "hello",
+        "paused": true,
+        "public": false,
+        "team_name": "test"
+    }
+]
