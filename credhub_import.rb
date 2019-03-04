@@ -2,8 +2,8 @@
 
 require 'openssl'
 require 'base64'
-require 'tempfile'
-require 'securerandom'
+
+require_relative("lib/credhub.rb")
 
 include Base64
 
@@ -34,10 +34,4 @@ cipher.decrypt
 cipher.key = decryption_key
 decrypted_plain_text = cipher.update(encrypted_creds) + cipher.final
 
-file = Tempfile.new(SecureRandom.hex(16))
-file.write(decrypted_plain_text)
-
-`credhub import -f #{file.path}`
-
-file.close
-file.unlink
+set_credentials(decrypted_plain_text)
