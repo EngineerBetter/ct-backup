@@ -1,0 +1,26 @@
+---
+platform: linux
+
+image_resource:
+  type: docker-image
+  source:
+    repository: engineerbetter/ct-backup
+
+params:
+  ADMIN_PASSWORD:
+  CONCOURSE_URL:
+  CREDHUB_CA_CERT:
+  CREDHUB_CLIENT:
+  CREDHUB_SECRET:
+  CREDHUB_SERVER:
+
+outputs:
+  - name: out
+
+run:
+  path: sh
+  args:
+    - -euc
+    - |
+      /opt/scripts/backup.rb
+      /opt/scripts/credhub_export.rb
