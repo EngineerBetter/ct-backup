@@ -5,12 +5,7 @@ require "base64"
 
 include Base64
 
-output_dir = ENV["OUTPUT_DIR"]
-
-if output_dir.nil?
-    `mkdir -p out`
-    output_dir = "out"
-end
+output_dir = 'out'
 
 credhub_contents = `credhub export`
 

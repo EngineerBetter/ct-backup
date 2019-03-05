@@ -4,27 +4,24 @@ require 'json'
 
 require_relative("lib/concourse.rb")
 
-fly_target = ENV['FLY_TARGET']
+concourse_url = ENV['CONCOURSE_URL']
 admin_password = ENV['ADMIN_PASSWORD']
 
-if fly_target.nil? || admin_password.nil?
-    puts 'FLY_TARGET and ADMIN_PASSWORD must be set'
+if concourse_url.nil? || admin_password.nil?
+    puts 'CONCOURSE_URL and ADMIN_PASSWORD must be set'
     exit 1
 end
 
-output_dir = ENV["OUTPUT_DIR"]
+`fly -t backup login -k -c #{concourse_url} -u admin -p #{admin_password}`
 
-if output_dir.nil?
-    `mkdir -p out`
-    output_dir = "out"
-end
+output_dir = 'out'
 
 puts 'exporting teams'
-teams = `fly -t #{fly_target} teams --json`
+teams = `fly -t backup teams --json`
 File.write("#{output_dir}/teams.json", teams)
 teams_json = JSON.parse(teams)
 
-concourse = Concourse.new(fly_target, output_dir, admin_password, teams_json)
+concourse = Concourse.new('backup', output_dir, admin_password, teams_json)
 
 concourse.set_teams_with_admin
 
