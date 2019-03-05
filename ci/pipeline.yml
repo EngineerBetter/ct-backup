@@ -77,7 +77,7 @@ resources:
   - name: ci-tf
     type: terraform
     source:
-      terraform_source: ct-backup/ci/tf/
+      terraform_source: ct-backup-github/ci/tf/
       storage:
         bucket: ct-backup-pipeline
         bucket_path: /terraform/
