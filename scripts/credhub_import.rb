@@ -7,16 +7,7 @@ require_relative("lib/credhub.rb")
 
 include Base64
 
-output_dir = ENV["OUTPUT_DIR"]
-
-if output_dir.nil?
-    if Dir.exist?("out")
-        output_dir = "out"
-    else
-        puts "OUTPUT_DIR not specified and `out` does not exist"
-        exit 1
-    end
-end
+backup_source_dir = 'backup_source'
 
 encoded_key = ENV["ENCRYPTION_KEY"]
 
@@ -27,7 +18,7 @@ end
 
 decryption_key = urlsafe_decode64(encoded_key)
 
-encrypted_creds = File.read("#{output_dir}/creds.encrypted")
+encrypted_creds = File.read("#{backup_source_dir}/creds.encrypted")
 
 cipher = OpenSSL::Cipher::AES128.new(:CBC)
 cipher.decrypt
