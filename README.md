@@ -2,84 +2,62 @@
 
 Backup & Restore scripts for Control Tower Concii
 
-## Backup Teams and Pipelines
+## Backup Teams, Credhub, and Pipelines
 
-1. Log in to your Concourse as the admin user
+1. Set the following env vars for the Concourse you want to backup
 
-    ```sh
-    fly -t <target> login
+    ```yaml
+    ADMIN_PASSWORD:
+    CONCOURSE_URL:
+    CREDHUB_CA_CERT:
+    CREDHUB_CLIENT:
+    CREDHUB_SECRET:
+    CREDHUB_SERVER:
     ```
 
-1. Export the necessary env vars
+1. Fly execute the task
 
     ```sh
-    export FLY_TARGET=<target>
-     export ADMIN_PASSWORD=<admin_password_for_your_concourse>
-    # You must create OUTPUT_DIR if you set this variable
-    # Defaults to (and creates) ./out if not set
-    export OUTPUT_DIR=<dir_for_backups>
+    $ fly -t some-target execute -c examples/backup.yml -o out=./out
+    ...
+    exporting teams
+    setting admin on all teams
+    exporting pipelines
+    setting correct auth on all teams
+    Key: <KEY>
+    out: 1.66 MiB/s 0s
+    succeeded
     ```
 
-1. Run the script
+1. Take note of the key from the output and store the files in `out` securely somewhere
+
+## Restore Teams, Credhub, and Pipelines
+
+1. Set the following env vars for the Concourse you want to restore to
+
+    ```yaml
+    ADMIN_PASSWORD:
+    CONCOURSE_URL:
+    CREDHUB_CA_CERT:
+    CREDHUB_CLIENT:
+    CREDHUB_SECRET:
+    CREDHUB_SERVER:
+    ENCRYPTION_KEY:
+    ```
+
+    > NOTE: `ENCRYPTION_KEY` comes from the output at the end of the backup task (see above)
+
+1. Fly execute the task
 
     ```sh
-    ./backup.rb
+    $ fly -t some-target execute -c examples/restore.yml -i backup_source=<path/to/backup/output/dir> --include-ignored
+    ...
+    setting admin on all teams
+    importing pipelines
+    setting correct auth on all teams
+    beginning credhub import - this may take a while
+    ...
+    succeeded
     ```
 
-## Restore Teams and Pipelines
-
-1. Set env vars
-
-    ```sh
-    export FLY_TARGET=<target>
-     export ADMIN_PASSWORD=<admin_password_for_your_new_concourse>
-    # Defaults to ./out if not set
-    export OUTPUT_DIR=<dir_containing_backed_up_things>
-    ```
-
-1. Run the script
-
-    ```sh
-    ./restore.rb
-    ```
-
-## Backing up Credhub
-
-1. Log in to your credhub
-
-    ```sh
-    eval "$(control-tower info --iaas <aws|gcp> --region <region> --env <deployment>)"
-    ```
-
-1. Set env vars
-
-    ```sh
-    # You must create OUTPUT_DIR if you set this variable
-    # Defaults to (and creates) ./out if not set
-    export OUTPUT_DIR=<dir_for_backups>
-    ```
-
-1. Run the script
-
-    ```sh
-    ./credhub_export
-    ```
-
-    This will write `creds.encrypted` to your `OUTPUT_DIR`. It will also output a decryption key for your creds. Take note of this as you will need it to decrypt them later.
-
-## Restoring Credhub
-
-1. Set env vars
-
-    ```sh
-    # Defaults to ./out if not set
-    export OUTPUT_DIR=<dir_containing_creds.encrypted>
-    export ENCRYPTION_KEY=<key_outputted_by_credhub_export>
-    ```
-
-1. Run the script
-
-    ```sh
-    ./credhub_import.rb
-    ```
-
+    > NOTE: `--include-ignored` is needed if your backup dir is `out` in this repo since it is in `.gitignore`
