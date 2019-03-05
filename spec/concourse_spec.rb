@@ -1,6 +1,6 @@
 require "rspec"
 require 'json'
-require_relative "../lib/concourse"
+require_relative "../scripts/lib/concourse"
 
 describe Concourse do
 
