@@ -2,6 +2,12 @@
 
 Backup & Restore scripts for Control Tower Concii
 
+## Usage
+
+These scripts are designed primarily for DR where a Concourse is being backed up then restored to a different, empty Concourse.
+
+It is not designed for use cases such as selectively restoring teams, secrets, or pipelines. You may encounter data loss or unexpected results if you try restoring to a non-empty Concourse.
+
 ## Backup Teams, Credhub, and Pipelines
 
 1. Set the following env vars for the Concourse you want to backup
@@ -61,3 +67,7 @@ Backup & Restore scripts for Control Tower Concii
     ```
 
     > NOTE: `--include-ignored` is needed if your backup dir is `out` in this repo since it is in `.gitignore`
+
+## Tests
+
+`bundle exec rspec`
