@@ -1,4 +1,11 @@
 ---
+resource_types:
+  - name: terraform
+    type: docker-image
+    source:
+      repository: ljfranklin/terraform-resource
+      tag: "0.11.10"
+
 jobs:
   - name: create-bucket
     serial: true
