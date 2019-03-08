@@ -68,6 +68,24 @@ It is not designed for use cases such as selectively restoring teams, secrets, o
 
     > NOTE: `--include-ignored` is needed if your backup dir is `out` in this repo since it is in `.gitignore`
 
+## Upausing and Exposing
+
+Against origin Concourse:
+
+```sh
+fly -t origin login
+# For each team
+fly -t origin pipelines --json > pipelines.json
+```
+
+Against target Concourse:
+
+```sh
+fly -t target login
+# For each team
+examples/unpause_expose.rb ebci pipelines.json
+```
+
 ## Tests
 
 `bundle exec rspec`
