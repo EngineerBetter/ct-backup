@@ -14,7 +14,7 @@ end
 
 `fly -t backup login -k -c #{concourse_url} -u admin -p #{admin_password}`
 
-`fly -t restore sync`
+`fly -t backup sync`
 
 output_dir = 'out'
 
