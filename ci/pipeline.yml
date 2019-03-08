@@ -34,7 +34,7 @@ jobs:
           - get: concourse-github-release
             trigger: true
             params:
-              globs: [fly_linux_amd64]
+              globs: [fly-*-linux-amd64.tgz]
           - get: credhub-cli-github-release
             trigger: true
             params:
@@ -58,7 +58,7 @@ jobs:
               - -xeuc
               - |
                 cp -r ct-backup-github/. builddir/
-                cp concourse-github-release/fly_linux_amd64 builddir/fly
+                tar xzf concourse-github-release/fly-*-linux-amd64.tgz -C builddir/
                 tar -C builddir -xzf credhub-cli-github-release/credhub-linux-*.tgz
       - put: ct-backup-image
         params:
