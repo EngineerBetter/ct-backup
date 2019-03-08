@@ -14,6 +14,8 @@ end
 
 `fly -t backup login -k -c #{concourse_url} -u admin -p #{admin_password}`
 
+`fly -t restore sync`
+
 output_dir = 'out'
 
 puts 'exporting teams'

@@ -14,6 +14,8 @@ end
 
 `fly -t restore login -k -c #{concourse_url} -u admin -p #{admin_password}`
 
+`fly -t restore sync`
+
 backup_source_dir = 'backup_source'
 
 unless FileTest.exist?("#{backup_source_dir}/teams.json")
