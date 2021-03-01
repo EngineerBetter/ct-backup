@@ -81,6 +81,8 @@ jobs:
       - name: builddir
       outputs:
       - name: image
+      params:
+        CONTEXT: builddir
       run:
         path: build
   - load_var: tag
