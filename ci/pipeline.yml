@@ -1,135 +1,160 @@
 ---
 resource_types:
-  - name: terraform
-    type: docker-image
-    source:
-      repository: ljfranklin/terraform-resource
-      tag: "0.11.10"
+- name: terraform
+  type: registry-image
+  source:
+    repository: ljfranklin/terraform-resource
+    tag: "0.11.10"
 
 jobs:
-  - name: create-bucket
-    serial: true
-    plan:
-      - get: ct-backup-github
-        trigger: true
-      - put: ci-tf
-        params:
-          env_name: whevs
+- name: set-pipeline
+  serial: true
+  plan:
+  - get: ct-backup-github
+    trigger: true
+  - set_pipeline: self
+    file: ct-backup-github/ci/pipeline.yml
 
-  - name: build-ct-backup-image
-    public: true
-    serial: true
-    plan:
-      - aggregate:
-          - get: ct-backup-docker-tag
-            params: { bump: minor }
-          # Download Dockerfile
-          - get: ct-backup-github
-            passed: [create-bucket]
-            trigger: true
-          # Trigger on base image updates
-          - get: base-image
-            trigger: true
-          # Download dependancies
-          - get: concourse-github-release
-            trigger: true
-            params:
-              globs: [fly-*-linux-amd64.tgz]
-          - get: credhub-cli-github-release
-            trigger: true
-            params:
-              globs: [credhub-linux-*.tgz]
-      # Copy dependencies
-      - task: copy
-        config:
-          platform: linux
-          inputs:
-            - name: ct-backup-github
-            - name: concourse-github-release
-            - name: credhub-cli-github-release
-          outputs:
-            - name: builddir
-          image_resource:
-            type: docker-image
-            source: { repository: busybox }
-          run:
-            path: ash
-            args:
-              - -xeuc
-              - |
-                cp -r ct-backup-github/. builddir/
-                tar xzf concourse-github-release/fly-*-linux-amd64.tgz -C builddir/
-                tar -C builddir -xzf credhub-cli-github-release/credhub-linux-*.tgz
-      - put: ct-backup-image
-        params:
-          build: builddir
-          tag: ct-backup-docker-tag/version
-          tag_as_latest: true
-      - put: ct-backup-github
-        params:
-          repository: ct-backup-github
-          tag: ct-backup-docker-tag/version
-          only_tag: true
-      - put: ct-backup-docker-tag
-        params: { file: ct-backup-docker-tag/version }
+- name: create-bucket
+  serial: true
+  plan:
+  - get: ct-backup-github
+    trigger: true
+    passed: [set-pipeline]
+  - put: ci-tf
+    params:
+      env_name: whevs
+
+- name: build-ct-backup-image
+  public: true
+  serial: true
+  plan:
+  - in_parallel:
+    - get: ct-backup-docker-tag
+      params: { bump: minor }
+    # Download Dockerfile
+    - get: ct-backup-github
+      passed: [create-bucket]
+      trigger: true
+    # Trigger on base image updates
+    - get: base-image
+      trigger: true
+    # Download dependancies
+    - get: concourse-github-release
+      trigger: true
+      params:
+        globs: [fly-*-linux-amd64.tgz]
+    - get: credhub-cli-github-release
+      trigger: true
+      params:
+        globs: [credhub-linux-*.tgz]
+  # Copy dependencies
+  - task: copy
+    config:
+      platform: linux
+      inputs:
+      - name: ct-backup-github
+      - name: concourse-github-release
+      - name: credhub-cli-github-release
+      outputs:
+      - name: builddir
+      image_resource:
+        type: docker-image
+        source: { repository: busybox }
+      run:
+        path: ash
+        args:
+        - -xeuc
+        - |
+          cp -r ct-backup-github/. builddir/
+          tar xzf concourse-github-release/fly-*-linux-amd64.tgz -C builddir/
+          tar -C builddir -xzf credhub-cli-github-release/credhub-linux-*.tgz
+  - task: build
+    privileged: true
+    config:
+      platform: linux
+      image_resource:
+        type: registry-image
+        source:
+          repository: vito/oci-build-task
+      inputs:
+      - name: builddir
+      outputs:
+      - name: image
+      run:
+        path: build
+  - load_var: tag
+    file: ct-backup-docker-tag/version
+  - put: ct-backup-image
+    params:
+      image: image/image.tar
+      version: ((.:tag))
+      bump_aliases: true
+  - put: ct-backup-github
+    params:
+      repository: ct-backup-github
+      tag: ct-backup-docker-tag/version
+      only_tag: true
+  - put: ct-backup-docker-tag
+    params: { file: ct-backup-docker-tag/version }
 
 resources:
-  - name: ci-tf
-    type: terraform
-    source:
-      terraform_source: ct-backup-github/ci/tf/
-      storage:
-        bucket: ct-backup-pipeline
-        bucket_path: /terraform/
-        access_key_id: ((aws_access_key_id))
-        secret_access_key: ((aws_secret_access_key))
-        region_name: eu-west-1
-        server_side_encryption: AES256
-      env:
-        AWS_ACCESS_KEY_ID: ((aws_access_key_id))
-        AWS_SECRET_ACCESS_KEY: ((aws_secret_access_key))
-        AWS_DEFAULT_REGION: eu-west-1
-
-  - name: ct-backup-docker-tag
-    type: semver
-    source:
-      driver: s3
-      key: docker-tag
+- name: ci-tf
+  type: terraform
+  source:
+    terraform_source: ct-backup-github/ci/tf/
+    storage:
       bucket: ct-backup-pipeline
+      bucket_path: /terraform/
       access_key_id: ((aws_access_key_id))
       secret_access_key: ((aws_secret_access_key))
       region_name: eu-west-1
+      server_side_encryption: AES256
+    env:
+      AWS_ACCESS_KEY_ID: ((aws_access_key_id))
+      AWS_SECRET_ACCESS_KEY: ((aws_secret_access_key))
+      AWS_DEFAULT_REGION: eu-west-1
 
-  - name: ct-backup-github
-    type: git
-    source:
-      uri: git@github.com:EngineerBetter/ct-backup.git
-      branch: master
-      private_key: ((github_private_key))
+- name: ct-backup-docker-tag
+  type: semver
+  source:
+    driver: s3
+    key: docker-tag
+    bucket: ct-backup-pipeline
+    access_key_id: ((aws_access_key_id))
+    secret_access_key: ((aws_secret_access_key))
+    region_name: eu-west-1
 
-  - name: ct-backup-image
-    type: docker-image
-    source:
-      username: ((dockerhub_user))
-      password: ((dockerhub_password))
-      repository: engineerbetter/ct-backup
+- name: ct-backup-github
+  type: git
+  source:
+    uri: git@github.com:EngineerBetter/ct-backup.git
+    branch: master
+    private_key: ((github_private_key))
 
-  - name: concourse-github-release
-    type: github-release
-    source:
-      owner: concourse
-      repository: concourse
-      access_token: ((github_access_token)) # Avoids rate limits
+- name: ct-backup-image
+  type: registry-image
+  source:
+    username: ((dockerhub_user))
+    password: ((dockerhub_password))
+    repository: engineerbetter/ct-backup
 
-  - name: base-image
-    type: docker-image
-    source:
-      repository: ruby
-      tag: 2.4
+- name: concourse-github-release
+  type: github-release
+  source:
+    owner: concourse
+    repository: concourse
+    access_token: ((github_access_token)) # Avoids rate limits
 
-  - name: credhub-cli-github-release
-    type: github-release
-    source:
-      owner: cloudfoundry-incubator
-      repository: credhub-cli
-      access_token: ((github_access_token)) # Avoids rate limits
+- name: base-image
+  type: registry-image
+  source:
+    repository: ruby
+    tag: 2.4
+
+- name: credhub-cli-github-release
+  type: github-release
+  source:
+    owner: cloudfoundry-incubator
+    repository: credhub-cli
+    access_token: ((github_access_token)) # Avoids rate limits
